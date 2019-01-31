@@ -32,12 +32,13 @@ void buildMatcher(const envoy::service::tap::v2alpha::MatchPredicate& match_conf
   case envoy::service::tap::v2alpha::MatchPredicate::kAnyMatch:
     new_matcher = std::make_unique<AnyMatcher>(matchers);
     break;
-  case envoy::service::tap::v2alpha::MatchPredicate::kHttpRequestMatch:
-    new_matcher = std::make_unique<HttpRequestMatcher>(match_config.http_request_match(), matchers);
+  case envoy::service::tap::v2alpha::MatchPredicate::kHttpRequestHeadersMatch:
+    new_matcher = std::make_unique<HttpRequestHeadersMatcher>(
+        match_config.http_request_headers_match(), matchers);
     break;
-  case envoy::service::tap::v2alpha::MatchPredicate::kHttpResponseMatch:
-    new_matcher =
-        std::make_unique<HttpResponseMatcher>(match_config.http_response_match(), matchers);
+  case envoy::service::tap::v2alpha::MatchPredicate::kHttpResponseHeadersMatch:
+    new_matcher = std::make_unique<HttpResponseHeadersMatcher>(
+        match_config.http_response_headers_match(), matchers);
     break;
   default:
     NOT_REACHED_GCOVR_EXCL_LINE;
@@ -118,22 +119,8 @@ bool NotMatcher::onHttpResponseHeaders(const Http::HeaderMap& response_headers,
   return statuses[my_index_];
 }
 
-HttpRequestMatcher::HttpRequestMatcher(const envoy::service::tap::v2alpha::HttpRequestMatch& config,
-                                       const std::vector<MatcherPtr>& matchers)
-    : Matcher(matchers) {
-  for (const auto& header_match : config.headers()) {
-    headers_to_match_.emplace_back(header_match);
-  }
-}
-
-bool HttpRequestMatcher::onHttpRequestHeaders(const Http::HeaderMap& request_headers,
-                                              std::vector<bool>& statuses) const {
-  statuses[my_index_] = Http::HeaderUtility::matchHeaders(request_headers, headers_to_match_);
-  return statuses[my_index_];
-}
-
-HttpResponseMatcher::HttpResponseMatcher(
-    const envoy::service::tap::v2alpha::HttpResponseMatch& config,
+HttpHeaderMatcherBase::HttpHeaderMatcherBase(
+    const envoy::service::tap::v2alpha::HttpHeadersMatch& config,
     const std::vector<MatcherPtr>& matchers)
     : Matcher(matchers) {
   for (const auto& header_match : config.headers()) {
@@ -141,9 +128,9 @@ HttpResponseMatcher::HttpResponseMatcher(
   }
 }
 
-bool HttpResponseMatcher::onHttpResponseHeaders(const Http::HeaderMap& response_headers,
-                                                std::vector<bool>& statuses) const {
-  statuses[my_index_] = Http::HeaderUtility::matchHeaders(response_headers, headers_to_match_);
+bool HttpHeaderMatcherBase::matchHeaders(const Http::HeaderMap& headers,
+                                         std::vector<bool>& statuses) const {
+  statuses[my_index_] = Http::HeaderUtility::matchHeaders(headers, headers_to_match_);
   return statuses[my_index_];
 }
 

@@ -116,6 +116,7 @@ config:
   codec_client_ = makeHttpConnection(makeClientConnection(lookupPort("http")));
   makeRequest(request_headers_tap_, response_headers_no_tap_);
 
+  // fixfix docs
   const std::string admin_request_yaml =
       R"EOF(
 config_id: test_config_id
@@ -123,11 +124,11 @@ tap_config:
   match_config:
     or_match:
       rules:
-        - http_request_match:
+        - http_request_headers_match:
             headers:
               - name: foo
                 exact_match: bar
-        - http_response_match:
+        - http_response_headers_match:
             headers:
               - name: bar
                 exact_match: baz
@@ -198,11 +199,11 @@ tap_config:
   match_config:
     and_match:
       rules:
-        - http_request_match:
+        - http_request_headers_match:
             headers:
               - name: foo
                 exact_match: bar
-        - http_response_match:
+        - http_response_headers_match:
             headers:
               - name: bar
                 exact_match: baz
